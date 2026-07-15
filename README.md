@@ -35,5 +35,7 @@ This POC intentionally does **not** use an iframe `sandbox` attribute because sa
 ## Notes
 
 - No backend is included.
+- The shell remembers the last selected nav item in localStorage under a versioned key. Transient iframe loading/ready state is not persisted, so Loopr reloads and establishes a fresh connection after refresh.
+- Because Loopr is loaded as a cross-origin iframe, the host shell cannot read or control the embedded app's internal state. Any persistence inside Loopr depends on Loopr using its own origin storage and cookies.
 - If the iframe cannot load, the UI shows a graceful unavailable state with retry and external-open actions.
 - Whether an external app can be embedded ultimately depends on that app's response headers, such as `X-Frame-Options` and `Content-Security-Policy frame-ancestors`.

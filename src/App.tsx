@@ -36,8 +36,42 @@ const navItems: NavItem[] = [
   { key: 'settings', label: 'Settings', icon: Settings },
 ]
 
+const DEFAULT_NAV_KEY: NavKey = 'loopr'
+const ACTIVE_NAV_STORAGE_KEY = 'loopr-console:active-nav:v1'
+
+function isNavKey(value: unknown): value is NavKey {
+  return typeof value === 'string' && navItems.some((item) => item.key === value)
+}
+
+function readActiveNavFromStorage(): NavKey {
+  if (typeof window === 'undefined') return DEFAULT_NAV_KEY
+
+  try {
+    const storedNav = window.localStorage.getItem(ACTIVE_NAV_STORAGE_KEY)
+
+    if (storedNav === null) return DEFAULT_NAV_KEY
+    if (isNavKey(storedNav)) return storedNav
+
+    window.localStorage.removeItem(ACTIVE_NAV_STORAGE_KEY)
+  } catch {
+    // localStorage can be unavailable in private modes, blocked contexts, or SSR-like tests.
+  }
+
+  return DEFAULT_NAV_KEY
+}
+
+function writeActiveNavToStorage(activeNav: NavKey) {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(ACTIVE_NAV_STORAGE_KEY, activeNav)
+  } catch {
+    // Ignore persistence failures so navigation remains usable.
+  }
+}
+
 function App() {
-  const [activeNav, setActiveNav] = useState<NavKey>('loopr')
+  const [activeNav, setActiveNav] = useState<NavKey>(readActiveNavFromStorage)
   const [iframeKey, setIframeKey] = useState(0)
   const [iframeStatus, setIframeStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading')
 
@@ -45,6 +79,10 @@ function App() {
     () => navItems.find((item) => item.key === activeNav)?.label ?? 'Loopr',
     [activeNav],
   )
+
+  useEffect(() => {
+    writeActiveNavToStorage(activeNav)
+  }, [activeNav])
 
   useEffect(() => {
     if (activeNav !== 'loopr') return
@@ -97,6 +135,7 @@ function App() {
           <div>
             <strong>POC environment</strong>
             <span>Embedded dev Loopr instance</span>
+            <span className="local-note">Preferences saved locally</span>
           </div>
         </div>
 
